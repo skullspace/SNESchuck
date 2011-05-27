@@ -1,11 +1,12 @@
 #include <Wire.h>
 #include "nunchuck_funcs.h"
+#include "digitalWriteFast.h"
 
 byte joyx,joyy,zbut,cbut;
 
-int clock = 2; // set the clock pin (RED)
-int latch = 3; // set the latch pin (ORANGE)
-int data  = 4; // set the data pin (YELLOW)
+#define CLOCK 2 // set the clock pin (RED)
+#define LATCH 3 // set the latch pin (ORANGE)
+#define DATA 4 // set the data pin (YELLOW)
 
 volatile int mode = 0;
 volatile int dataBuf[17];
@@ -13,14 +14,21 @@ volatile int dataBuf[17];
 void latchRising()
 {
   mode = 1;
-  digitalWrite(data, dataBuf[1]);
+  if(dataBuf[1] == HIGH)
+    digitalWriteFast(DATA, HIGH);
+  else
+    digitalWriteFast(DATA, LOW);
 }
 
 void clockRising()
 {
-  digitalWrite(data, dataBuf[++mode]);
+  if(dataBuf[++mode] == HIGH)
+    digitalWriteFast(DATA, HIGH);
+  else
+    digitalWriteFast(DATA, LOW);
+    
   if(mode == 16)
-    digitalWrite(data, LOW);
+    digitalWriteFast(DATA, LOW);
 } 
 
 /* SETUP */
@@ -29,10 +37,10 @@ void setup()
   int loop;
   for(loop = 0;loop<17;loop++)
     dataBuf[loop] = HIGH;
-  pinMode(latch,INPUT);
-  pinMode(clock,INPUT);
-  pinMode(data,OUTPUT);
-  digitalWrite(data, LOW);
+  pinMode(LATCH,INPUT);
+  pinMode(CLOCK,INPUT);
+  pinMode(DATA,OUTPUT);
+  digitalWrite(DATA, LOW);
   attachInterrupt(0, clockRising, RISING);
   attachInterrupt(1, latchRising, RISING);
   
