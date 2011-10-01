@@ -1,61 +1,55 @@
 #include <Wire.h>
-#include "nunchuck_funcs.h"
 #include "digitalWriteFast.h"
+#include "nunchuck_funcs.h"
 
 byte joyx,joyy,zbut,cbut,accy;
 
-#define CLOCK 2 // set the clock pin (YELLOW)
-#define LATCH 3 // set the latch pin (ORANGE)
-#define DATA 4 // set the data pin (RED)
+#define P1_B       7
+#define P1_Y       1
+#define P1_SELECT  5
+#define P1_START   4
+#define P1_UP      3
+#define P1_DOWN    2
+#define P1_LEFT    6
+#define P1_RIGHT   0
 
-volatile int mode = 0;
-volatile int dataBuf[17];
-
-void latchRising()
-{
-  mode = 1;
-  if(dataBuf[1] == HIGH)
-  {
-    digitalWriteFast2(DATA, HIGH);
-  }
-  else
-  {
-    digitalWriteFast2(DATA, LOW);
-  }
-}
-
-void clockRising()
-{
-  mode++;
-  if(dataBuf[mode] == HIGH)
-  {
-    digitalWriteFast2(DATA, HIGH);
-  }
-  else
-  {
-    digitalWriteFast2(DATA, LOW);
-  }
-    
-  if(mode == 16)
-  {
-    digitalWriteFast2(DATA, HIGH);
-  }
-} 
+#define P1_A       7
+#define P1_X       9
+#define P1_L       10
+#define P1_R       11
 
 /* SETUP */
 void setup()
 {
-  int loop;
-  for(loop = 0;loop<17;loop++)
-    dataBuf[loop] = HIGH;
-  pinMode(LATCH,INPUT);
-  pinMode(CLOCK,INPUT);
-  pinModeFast2(DATA,OUTPUT);
-  digitalWriteFast2(DATA, HIGH);
-  attachInterrupt(0, clockRising, RISING);
-  attachInterrupt(1, latchRising, RISING);
+  pinMode(P1_B, OUTPUT);
+  pinMode(P1_Y, OUTPUT);
+  pinMode(P1_SELECT, OUTPUT);
+  pinMode(P1_START, OUTPUT);
+  pinMode(P1_UP, OUTPUT);
+  pinMode(P1_DOWN, OUTPUT);
+  pinMode(P1_LEFT, OUTPUT);
+  pinMode(P1_RIGHT, OUTPUT);
   
-  Serial.begin(115200);
+  pinMode(P1_A, OUTPUT);
+  pinMode(P1_X, OUTPUT);
+  pinMode(P1_L, OUTPUT);
+  pinMode(P1_R, OUTPUT);
+  
+  digitalWriteFast2(P1_B, HIGH);
+  digitalWriteFast2(P1_Y, HIGH);
+  digitalWriteFast2(P1_SELECT, HIGH);
+  digitalWriteFast2(P1_START, HIGH);
+  digitalWriteFast2(P1_UP, HIGH);
+  digitalWriteFast2(P1_DOWN, HIGH);
+  digitalWriteFast2(P1_LEFT, HIGH);
+  digitalWriteFast2(P1_RIGHT, HIGH);
+  
+  digitalWriteFast2(P1_A, HIGH);
+  digitalWriteFast2(P1_X, HIGH);
+  digitalWriteFast2(P1_L, HIGH);
+  digitalWriteFast2(P1_R, HIGH); 
+   
+  //Serial.begin(115200);
   
   nunchuck_setpowerpins();
   nunchuck_init(); // send the initilization handshake
@@ -69,54 +63,97 @@ void loop()
   joyx  = nunchuck_joyx(); // ranges from approx 70 - 182
   
   if(joyx<83) // LEFT
-    dataBuf[7] = LOW;
+  {
+    digitalWriteFast2(P1_LEFT, LOW);
+  }
   else
-    dataBuf[7] = HIGH;
+  {
+    digitalWriteFast2(P1_LEFT, HIGH);
+  }
     
   if(joyx>177) // RIGHT
-    dataBuf[8] = LOW;
+  {
+    digitalWriteFast2(P1_RIGHT, LOW);
+  }
   else
-    dataBuf[8] = HIGH;
+  {
+    digitalWriteFast2(P1_RIGHT, HIGH);
+  }
   
   joyy  = nunchuck_joyy(); // ranges from approx 65 - 173
   
   if(joyy>182) // UP
-    dataBuf[5] = LOW;
+  {
+    digitalWriteFast2(P1_UP, LOW);
+  }
   else
-    dataBuf[5] = HIGH;
+  {
+    digitalWriteFast2(P1_UP, HIGH);
+  }
  
   if(joyy<89) // DOWN
-    dataBuf[6] = LOW;
+  {
+    digitalWriteFast2(P1_DOWN, LOW);
+  }
   else
-    dataBuf[6] = HIGH;
+  {
+    digitalWriteFast2(P1_DOWN, HIGH);
+  }
+  
+  
   
   zbut = nunchuck_zbutton();
-  
-  // hack for random pausing
-  if(zbut && dataBuf[5] == HIGH)
-    dataBuf[1] = LOW;
-  else
-    dataBuf[1] = HIGH;
-    
   cbut = nunchuck_cbutton();
-  
-  // hack for random pausing
-  if(cbut && dataBuf[5] == HIGH)
-    dataBuf[2] = LOW;
-  else
-    dataBuf[2] = HIGH;
-    
   accy = nunchuck_accely();
-
-  // if we hold the wiimote up and press C+Z, then hit START
-  if((accy < 80) && cbut && zbut)
+  
+  if(accy > 105)
   {
-    dataBuf[4] = LOW;
-    dataBuf[1] = HIGH;
-    dataBuf[1] = HIGH;
+    if(zbut)
+    {
+      digitalWriteFast2(P1_B, LOW);
+    }
+    else
+    {
+      digitalWriteFast2(P1_B, HIGH);
+    }
+    
+    if(cbut)
+    {
+      digitalWriteFast2(P1_Y, LOW);
+    }
+    else
+    {  
+      digitalWriteFast2(P1_Y, HIGH);
+    }
+    
+    digitalWriteFast2(P1_START, HIGH);
+    digitalWriteFast2(P1_SELECT, HIGH);
+  }
+  // if we hold the wiimote up and press C+Z, then hit START
+  else
+  {
+    if(cbut)
+    {
+      digitalWriteFast2(P1_START, LOW);
+    }
+    else
+    {
+      digitalWriteFast2(P1_START, HIGH);
+    }
+  
+    if(zbut)
+    {
+      digitalWriteFast2(P1_SELECT, LOW);
+    }
+    else
+    {
+      digitalWriteFast2(P1_SELECT, HIGH);
+    }
+    
+    digitalWriteFast2(P1_Y, HIGH);
+    digitalWriteFast2(P1_B, HIGH);
   }
 
-  delay(30);
-  dataBuf[4] = HIGH;
+  delay(10);
   //nunchuck_print_data();
 } 

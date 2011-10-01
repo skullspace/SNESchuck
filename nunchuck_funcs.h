@@ -15,7 +15,7 @@
 #define RADIUS 210
 
 // comment this out for nintendo nunchuck
-//#define DX
+#define DX
 
 static uint8_t nunchuck_buf[6];   // array to store nunchuck data,
 
